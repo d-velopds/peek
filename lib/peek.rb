@@ -1,6 +1,6 @@
 require 'peek/version'
 require 'rails'
-require 'concurrent/atomics'
+require 'concurrent/atomic/thread_local_var'
 
 require 'peek/adapters/memory'
 require 'peek/views/view'
@@ -9,15 +9,15 @@ module Peek
   ALLOWED_ENVS = ['development', 'staging'].freeze
 
   def self._request_id
-    @_request_id ||= Concurrent::AtomicReference.new
+    @_request_id ||= Concurrent::ThreadLocalVar.new
   end
 
   def self.request_id
-    _request_id.get
+    _request_id.value
   end
 
   def self.request_id=(id)
-    _request_id.update { id }
+    _request_id.value = id
   end
 
   def self.adapter
@@ -101,7 +101,7 @@ module Peek
   #
   # Returns nothing.
   def self.clear
-    _request_id.update { '' }
+    _request_id.value = ''
   end
 
   def self.setup
